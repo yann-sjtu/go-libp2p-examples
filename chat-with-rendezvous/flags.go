@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"strings"
 
 	maddr "github.com/multiformats/go-multiaddr"
@@ -55,9 +54,9 @@ func ParseFlags() (Config, error) {
 	flag.StringVar(&config.ProtocolID, "pid", "/chat/1.1.0", "Sets a protocol id for stream headers")
 	flag.Parse()
 
-	if len(config.BootstrapPeers) == 0 {
-		config.BootstrapPeers = dht.DefaultBootstrapPeers
-	}
+	//if len(config.BootstrapPeers) == 0 {
+	//	config.BootstrapPeers = dht.DefaultBootstrapPeers
+	//}
 
 	return config, nil
 }
