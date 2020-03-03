@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"strings"
 
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	maddr "github.com/multiformats/go-multiaddr"
 )
 

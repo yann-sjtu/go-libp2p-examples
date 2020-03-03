@@ -5,18 +5,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
-	"github.com/libp2p/go-libp2p-discovery"
-
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	multiaddr "github.com/multiformats/go-multiaddr"
-	logging "github.com/whyrusleeping/go-logging"
+	"github.com/multiformats/go-multiaddr"
+	"github.com/whyrusleeping/go-logging"
 
 	"github.com/ipfs/go-log"
 )
@@ -106,6 +105,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("host addrs:", host.Addrs())
 	logger.Info("Host created. We are:", host.ID())
 	logger.Info(host.Addrs())
 
@@ -146,42 +146,50 @@ func main() {
 	}
 	wg.Wait()
 
-	// We use a rendezvous point "meet me here" to announce our location.
-	// This is like telling your friends to meet you at the Eiffel Tower.
-	logger.Info("Announcing ourselves...")
-	routingDiscovery := discovery.NewRoutingDiscovery(kademliaDHT)
-	discovery.Advertise(ctx, routingDiscovery, config.RendezvousString)
-	logger.Debug("Successfully announced!")
-
-	// Now, look for others who have announced
-	// This is like your friend telling you the location to meet you.
-	logger.Debug("Searching for other peers...")
-	peerChan, err := routingDiscovery.FindPeers(ctx, config.RendezvousString)
-	if err != nil {
-		panic(err)
-	}
-
-	for peer := range peerChan {
-		if peer.ID == host.ID() {
-			continue
+	go func() {
+		for {
+			fmt.Println("peer list:", kademliaDHT.RoutingTable().ListPeers())
+			fmt.Println("store list:", host.Peerstore().Peers(), host.Peerstore().PeersWithAddrs())
+			time.Sleep(time.Second * 3)
 		}
-		logger.Debug("Found peer:", peer)
+	}()
 
-		logger.Debug("Connecting to:", peer)
-		stream, err := host.NewStream(ctx, peer.ID, protocol.ID(config.ProtocolID))
-
-		if err != nil {
-			logger.Warning("Connection failed:", err)
-			continue
-		} else {
-			rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
-
-			go writeData(rw)
-			go readData(rw)
-		}
-
-		logger.Info("Connected to:", peer)
-	}
+	//// We use a rendezvous point "meet me here" to announce our location.
+	//// This is like telling your friends to meet you at the Eiffel Tower.
+	//logger.Info("Announcing ourselves...")
+	//routingDiscovery := discovery.NewRoutingDiscovery(kademliaDHT)
+	//discovery.Advertise(ctx, routingDiscovery, config.RendezvousString)
+	//logger.Debug("Successfully announced!")
+	//
+	//// Now, look for others who have announced
+	//// This is like your friend telling you the location to meet you.
+	//logger.Debug("Searching for other peers...")
+	//peerChan, err := routingDiscovery.FindPeers(ctx, config.RendezvousString)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//for peer := range peerChan {
+	//	if peer.ID == host.ID() {
+	//		continue
+	//	}
+	//	logger.Debug("Found peer:", peer)
+	//
+	//	logger.Debug("Connecting to:", peer)
+	//	stream, err := host.NewStream(ctx, peer.ID, protocol.ID(config.ProtocolID))
+	//
+	//	if err != nil {
+	//		logger.Warning("Connection failed:", err)
+	//		continue
+	//	} else {
+	//		rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
+	//
+	//		go writeData(rw)
+	//		go readData(rw)
+	//	}
+	//
+	//	logger.Info("Connected to:", peer)
+	//}
 
 	select {}
 }
